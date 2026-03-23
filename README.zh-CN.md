@@ -160,4 +160,5 @@ MIT
 ## 致谢
 
 - 数据由 [tokscale](https://github.com/junhoyeo/tokscale)（Junho Yeo）驱动
+- 灵感来自 [token-insight](https://github.com/mo2g/token-insight)
 - 定价数据来自 [LiteLLM](https://github.com/BerriAI/litellm) 和 [OpenRouter](https://openrouter.ai)

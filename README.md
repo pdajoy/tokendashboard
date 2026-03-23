@@ -188,4 +188,5 @@ MIT
 ## Credits
 
 - Data powered by [tokscale](https://github.com/junhoyeo/tokscale) by Junho Yeo
+- Inspired by [token-insight](https://github.com/mo2g/token-insight)
 - Pricing data from [LiteLLM](https://github.com/BerriAI/litellm) and [OpenRouter](https://openrouter.ai)
