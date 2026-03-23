@@ -1,0 +1,21 @@
+# Build artifacts
+bin/
+frontend/dist/
+frontend/node_modules/
+
+# Data files (user-specific)
+data/models.json
+data/monthly.json
+data/graph.json
+data/meta.json
+data/pricing.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
