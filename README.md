@@ -21,6 +21,14 @@ If you use AI coding assistants like **Cursor**, **Codex CLI**, **Claude Code**,
 |:-:|:-:|:-:|
 | ![Dark](docs/screenshots/overview-dark.png) | ![Light](docs/screenshots/overview-light.png) | ![Pricing](docs/screenshots/pricing-dark.png) |
 
+### Share Cards
+
+Generate beautiful PNG cards to share your AI usage stats:
+
+| Overview Card | Streak Card | Badge Card |
+|:-:|:-:|:-:|
+| ![Overview](docs/screenshots/share-overview.png) | ![Streak](docs/screenshots/share-streak.png) | ![Badge](docs/screenshots/share-badge.png) |
+
 ## Features
 
 ### Analytics & Visualization

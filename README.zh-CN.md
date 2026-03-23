@@ -21,6 +21,14 @@
 |:-:|:-:|:-:|
 | ![Dark](docs/screenshots/overview-dark.png) | ![Light](docs/screenshots/overview-light.png) | ![Pricing](docs/screenshots/pricing-dark.png) |
 
+### 分享卡片
+
+生成精美的 PNG 卡片，分享你的 AI 使用数据：
+
+| 总览卡片 | 连续使用卡片 | 徽章卡片 |
+|:-:|:-:|:-:|
+| ![Overview](docs/screenshots/share-overview.png) | ![Streak](docs/screenshots/share-streak.png) | ![Badge](docs/screenshots/share-badge.png) |
+
 ## 核心功能
 
 ### 数据分析与可视化
