@@ -1,8 +1,8 @@
-# Tokscale Dashboard
+## Tokscale Dashboard
 
 **[中文文档](README.zh-CN.md)**
 
-A powerful, beautiful analytics dashboard for tracking AI coding assistant token usage and costs. Built on top of [tokscale](https://github.com/junhoyeo/tokscale) data with a Go backend and React frontend.
+A powerful, beautiful analytics dashboard for tracking AI coding assistant token usage and costs. Built on top of [tokscale](https://github.com/junhoyeo/tokscale) data with a zero-dependency Node.js server and React frontend.
 
 ![Overview - Dark Mode](docs/screenshots/overview-dark.png)
 
@@ -29,16 +29,41 @@ Generate beautiful PNG cards to share your AI usage stats:
 |:-:|:-:|:-:|
 | ![Overview](docs/screenshots/share-overview.png) | ![Streak](docs/screenshots/share-streak.png) | ![Badge](docs/screenshots/share-badge.png) |
 
+## Quick Start
+
+Run the dashboard directly — no clone, no install:
+
+```bash
+# With bun
+bunx tokscale-dashboard
+
+# With npm
+npx tokscale-dashboard
+
+# Custom port
+npx tokscale-dashboard --port 3000
+```
+
+Then open <http://localhost:8787>.
+
+On first launch, the dashboard will:
+1. Use the bundled pre-built frontend assets
+2. Create `~/.tokscale-dashboard/data/` to store graph, pricing, and settings
+3. Call the `tokscale` CLI (via `bunx tokscale@latest` by default) to collect the initial data set
+
+All data refresh and tokscale runner configuration happens in the in-app Settings panel — no external scripts needed.
+
 ## Features
 
 ### Analytics & Visualization
 - **Summary Dashboard** — Total cost, tokens, messages, active days, peak day, and cache stats at a glance
 - **Monthly Cost Trends** — Interactive line charts tracking cost and message volume over time
+- **Monthly Breakdown** — Expandable rows showing per-model usage for each month
 - **Daily Activity Heatmap** — GitHub-style contribution graph for your AI usage
-- **Provider & Source Breakdown** — Pie charts showing cost distribution by provider (Anthropic, OpenAI, Google, etc.)
+- **Provider & Source Breakdown** — Pie charts showing cost distribution by provider
 - **Top Models Ranking** — Ranked list of your most-used (and most expensive) models
-- **Token Type Analysis** — Monthly breakdown of Input, Output, Cache Read, Cache Write, and Reasoning tokens
-- **Daily Usage Charts** — Granular daily cost and token analysis
+- **Token Type Analysis** — Monthly breakdown with stacked (vertical) and grouped (horizontal) bar layouts
+- **Daily Usage Charts** — Granular daily cost and token analysis, expandable by model
 
 ### Pricing Intelligence
 - **Model Price List** — Real-time pricing data from LiteLLM and OpenRouter for 56+ models
@@ -46,30 +71,26 @@ Generate beautiful PNG cards to share your AI usage stats:
 - **Cost Ratio Analysis** — Instantly see which models are cheaper on your platform vs direct API
 - **Automatic Model Mapping** — Maps platform-specific model names to their public API equivalents
 
-### Advanced Filtering
-- **Multi-dimensional Filters** — Filter by Source, Provider, Model, date range, and minimum cost
-- **Quick Date Presets** — One-click presets for 7d, 30d, this month, last month, 6m, 1y
-- **Search** — Full-text search across models and providers
-- **Real-time Updates** — All charts and tables update instantly when filters change
+### Settings & Data Refresh
+- **In-app settings modal** — Configure the tokscale runner (`bunx` / `npx`), package spec (`tokscale@latest`, pinned versions, etc.), and extra CLI arguments
+- **Granular refresh** — Refresh everything, token data only, or pricing only — all from the UI
+- **Live log output** — See each step of the refresh as it happens
 
 ### Shareable Cards
 - **9 Card Templates** — Overview, Compact, Top Models, Activity, Monthly, Providers, Tokens, Streak, Badge
 - **PNG Export** — High-resolution 2x PNG download for any card
-- **Dark-themed Cards** — All cards render with a premium dark aesthetic for sharing
-- **Rank System** — Badge card features a rank from Starter to Legend based on total spend
 
 ### Theming & UX
 - **Dark & Light Mode** — Full theme support with persistent preference
 - **Glass Morphism UI** — Modern frosted glass design with smooth animations
 - **Responsive Layout** — Works on desktop and tablet
 - **CSV Export** — One-click full data export
-- **One-click Data Refresh** — Re-collect latest data from tokscale CLI
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Backend | Go (standard library, zero dependencies) |
+| Runtime | Node.js 18+ (zero runtime dependencies) |
 | Frontend | React 19 + TypeScript + Vite |
 | Styling | Tailwind CSS v4 |
 | Charts | Recharts |
@@ -77,108 +98,67 @@ Generate beautiful PNG cards to share your AI usage stats:
 | Image Export | html-to-image |
 | Data Source | [tokscale](https://github.com/junhoyeo/tokscale) CLI |
 
-## Quick Start
-
-### Prerequisites
-- Go 1.21+
-- Node.js 18+ and npm
-- [Bun](https://bun.sh) (for tokscale CLI data collection)
-
-### Setup
+## Local Development
 
 ```bash
-# Clone the repository
 git clone https://github.com/pdajoy/tokendashboard.git
 cd tokendashboard
 
-# Build everything (Go backend + React frontend)
-bash scripts/build.sh
+# Install frontend deps + build dist
+npm run build
 
-# Collect data (requires tokscale CLI)
-bash scripts/update-data.sh
-
-# Start the dashboard
-bash scripts/start.sh
+# Start the combined Node.js server (API + static frontend)
+npm start
 # Open http://localhost:8787
 ```
 
-### Development Mode
+### Dev mode with hot reload
 
 ```bash
-# Start Go backend + React dev server with hot reload
-bash scripts/dev.sh
-# Open http://localhost:5173
+npm run dev
+# Vite dev server: http://localhost:5173
+# API server:     http://localhost:8787
 ```
 
-### Generate Pricing Data
+## Environment Variables
 
-```bash
-# The pricing data is auto-generated from tokscale CLI
-# It queries LiteLLM and OpenRouter for real-time model pricing
-# The pricing.json file is served via /api/pricing
-```
-
-## Scripts
-
-| Script | Description |
-|---|---|
-| `scripts/build.sh` | Build Go backend + React frontend |
-| `scripts/update-data.sh` | Collect latest data via tokscale CLI |
-| `scripts/start.sh` | Start production server (auto-builds if needed) |
-| `scripts/dev.sh` | Start development mode with hot reload |
+| Variable | Description | Default |
+|---|---|---|
+| `PORT` | HTTP port | `8787` |
+| `DATA_DIR` | Directory for `graph.json`, `pricing.json`, `settings.json` | `./data` (dev) / `~/.tokscale-dashboard/data` (installed) |
+| `FRONTEND_DIR` | Built frontend directory | `./frontend/dist` |
+| `API_ONLY` | Set to `1` to disable static serving (used in dev) | — |
 
 ## API Endpoints
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/api/models` | GET | Model usage details |
-| `/api/monthly` | GET | Monthly summary |
+| `/api/models` | GET | Model usage details, derived on the fly from `graph.json` |
+| `/api/monthly` | GET | Monthly summary, derived on the fly from `graph.json` |
 | `/api/graph` | GET | Daily contribution data |
 | `/api/pricing` | GET | Model pricing data |
 | `/api/meta` | GET | Data update timestamp |
 | `/api/export/csv` | GET | Export all data as CSV |
-| `/api/refresh` | POST | Trigger data refresh |
+| `/api/settings` | GET/POST | Read or update settings (tokscale runner, spec, extra args) |
+| `/api/refresh` | POST | Trigger data refresh. Body: `{ "target": "all" \| "graph" \| "pricing" }` |
 | `/api/health` | GET | Health check |
 
 ## Project Structure
 
 ```
 tokscale-dashboard/
-├── backend/              # Go backend server
-│   ├── go.mod
-│   └── main.go           # HTTP server, API routes, CORS
-├── frontend/             # React frontend
+├── scripts/
+│   ├── server.mjs           # HTTP server + API routes + SPA serving
+│   ├── data-utils.mjs       # JSON derivation utilities (no deps)
+│   ├── data-refresh.mjs     # Internal data refresh (spawns tokscale CLI)
+│   ├── pricing-resolver.mjs # LiteLLM + OpenRouter pricing resolver & cache
+│   ├── settings.mjs         # Settings read/write
+│   └── dev.mjs              # Dev mode launcher (Vite + API)
+├── frontend/                # React app (Vite)
 │   ├── src/
-│   │   ├── App.tsx        # Main app with tabs and routing
-│   │   ├── api.ts         # API client
-│   │   ├── components/    # All UI components
-│   │   │   ├── SummaryCards.tsx
-│   │   │   ├── MonthlyChart.tsx
-│   │   │   ├── DailyChart.tsx
-│   │   │   ├── ProviderChart.tsx
-│   │   │   ├── TokenBreakdown.tsx
-│   │   │   ├── ContributionHeatmap.tsx
-│   │   │   ├── TopModels.tsx
-│   │   │   ├── ModelTable.tsx
-│   │   │   ├── MonthlyTable.tsx
-│   │   │   ├── DailyTable.tsx
-│   │   │   ├── FilterPanel.tsx
-│   │   │   ├── PricingTable.tsx
-│   │   │   └── ShareCard.tsx
-│   │   ├── hooks/         # Custom React hooks
-│   │   │   ├── useData.ts
-│   │   │   └── useTheme.tsx
-│   │   └── types/         # TypeScript interfaces
-│   └── dist/              # Production build output
-├── data/                  # tokscale JSON data files
-│   ├── models.json
-│   ├── monthly.json
-│   ├── graph.json
-│   ├── pricing.json
-│   └── meta.json
-├── docs/                  # Documentation and screenshots
-├── scripts/               # Build and management scripts
-└── bin/                   # Compiled Go binary
+│   └── dist/                # Pre-built output (shipped with npm package)
+├── data/                    # Runtime data (local dev)
+└── docs/                    # Screenshots
 ```
 
 ## License

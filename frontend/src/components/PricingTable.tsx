@@ -25,6 +25,30 @@ function fmtTokens(n: number): string {
   return n.toLocaleString()
 }
 
+const PRICING_ALIASES: Record<string, string[]> = {
+  'gpt-5.4-2026-03-05': ['gpt-5.4'],
+  'gpt-5.4-medium': ['gpt-5.4'],
+  'gpt-5.4-xhigh': ['gpt-5.4'],
+  'gpt-5.4-xhigh-fast': ['gpt-5.4'],
+  // Prefer the matching 4.7 family when present; otherwise fall back to 4.6.
+  'claude-opus-4-7': ['claude-opus-4-6'],
+  'claude-opus-4-7-thinking-high': ['claude-opus-4-7', 'claude-opus-4-6'],
+  'claude-opus-4-7-thinking-max': ['claude-opus-4-7', 'claude-opus-4-6'],
+}
+
+function resolvePricing(model: string, pricing: PricingData | null) {
+  if (!pricing) return null
+  const exact = pricing.models[model]
+  if (exact) return exact
+
+  const aliases = PRICING_ALIASES[model] ?? []
+  for (const alias of aliases) {
+    const resolved = pricing.models[alias]
+    if (resolved) return resolved
+  }
+  return null
+}
+
 export function PricingTable({ entries, pricing }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('estCost')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
@@ -53,7 +77,7 @@ export function PricingTable({ entries, pricing }: Props) {
     }
 
     return [...byModel.values()].map(row => {
-      const p = pricing?.models[row.model]
+      const p = resolvePricing(row.model, pricing)
       const estCost = p
         ? (row.input * p.inputPer1M / 1e6) +
           (row.output * p.outputPer1M / 1e6) +
@@ -98,7 +122,7 @@ export function PricingTable({ entries, pricing }: Props) {
     }
   }
 
-  const SortIcon = ({ col }: { col: SortKey }) => {
+  function renderSortIcon(col: SortKey) {
     if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 opacity-30" />
     return sortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
   }
@@ -187,31 +211,31 @@ export function PricingTable({ entries, pricing }: Props) {
             <thead>
               <tr className={isDark ? 'bg-slate-800/50 border-b border-slate-700/50' : 'bg-slate-50 border-b border-slate-200'}>
                 <th className={thClass} onClick={() => handleSort('model')}>
-                  <span className="flex items-center gap-1">Model <SortIcon col="model" /></span>
+                  <span className="flex items-center gap-1">Model {renderSortIcon('model')}</span>
                 </th>
                 <th className={thClass} onClick={() => handleSort('provider')}>
-                  <span className="flex items-center gap-1">Provider <SortIcon col="provider" /></span>
+                  <span className="flex items-center gap-1">Provider {renderSortIcon('provider')}</span>
                 </th>
                 <th className={`${thClass} text-right`} onClick={() => handleSort('input')}>
-                  <span className="flex items-center gap-1 justify-end">Input/1M <SortIcon col="input" /></span>
+                  <span className="flex items-center gap-1 justify-end">Input/1M {renderSortIcon('input')}</span>
                 </th>
                 <th className={`${thClass} text-right`} onClick={() => handleSort('output')}>
-                  <span className="flex items-center gap-1 justify-end">Output/1M <SortIcon col="output" /></span>
+                  <span className="flex items-center gap-1 justify-end">Output/1M {renderSortIcon('output')}</span>
                 </th>
                 <th className={`${thClass} text-right`} onClick={() => handleSort('cacheRead')}>
-                  <span className="flex items-center gap-1 justify-end">Cache R/1M <SortIcon col="cacheRead" /></span>
+                  <span className="flex items-center gap-1 justify-end">Cache R/1M {renderSortIcon('cacheRead')}</span>
                 </th>
                 <th className={`${thClass} text-right`} onClick={() => handleSort('cacheWrite')}>
-                  <span className="flex items-center gap-1 justify-end">Cache W/1M <SortIcon col="cacheWrite" /></span>
+                  <span className="flex items-center gap-1 justify-end">Cache W/1M {renderSortIcon('cacheWrite')}</span>
                 </th>
                 <th className={`${thClass} text-right`} onClick={() => handleSort('actualCost')}>
-                  <span className="flex items-center gap-1 justify-end">Actual <SortIcon col="actualCost" /></span>
+                  <span className="flex items-center gap-1 justify-end">Actual {renderSortIcon('actualCost')}</span>
                 </th>
                 <th className={`${thClass} text-right`} onClick={() => handleSort('estCost')}>
-                  <span className="flex items-center gap-1 justify-end">Est. API <SortIcon col="estCost" /></span>
+                  <span className="flex items-center gap-1 justify-end">Est. API {renderSortIcon('estCost')}</span>
                 </th>
                 <th className={`${thClass} text-right`} onClick={() => handleSort('ratio')}>
-                  <span className="flex items-center gap-1 justify-end">Ratio <SortIcon col="ratio" /></span>
+                  <span className="flex items-center gap-1 justify-end">Ratio {renderSortIcon('ratio')}</span>
                 </th>
               </tr>
             </thead>

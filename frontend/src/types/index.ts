@@ -125,3 +125,23 @@ export interface PricingData {
   errors: string[]
   models: Record<string, ModelPricing>
 }
+
+export interface TokscaleSettings {
+  runner: string
+  spec: string
+  extraArgs: string[]
+}
+
+export interface AppSettings {
+  tokscale: TokscaleSettings
+}
+
+export type RefreshTarget = 'all' | 'graph' | 'tokens' | 'pricing'
+
+export interface RefreshResult {
+  success: boolean
+  target?: RefreshTarget
+  message: string
+  updatedAt?: string | null
+  log?: string
+}

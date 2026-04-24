@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
   Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Line, ComposedChart,
-  LabelList,
+  LabelList, BarChart,
 } from 'recharts'
 import type { MonthlyData } from '../types'
 import { format, parse } from 'date-fns'
@@ -31,9 +31,7 @@ export function TokenBreakdown({ monthly }: Props) {
   const { isDark } = useTheme()
   const ct = chartTheme(isDark)
 
-  if (!monthly?.entries?.length) return null
-
-  const data = useMemo(() => monthly.entries.map(e => {
+  const data = useMemo(() => (monthly?.entries ?? []).map(e => {
     const d = parse(e.month, 'yyyy-MM', new Date())
     const totalTokens = e.input + e.output + e.cacheRead + e.cacheWrite
     return {
@@ -47,13 +45,13 @@ export function TokenBreakdown({ monthly }: Props) {
     }
   }), [monthly])
 
+  if (!monthly?.entries?.length) return null
+
   const grandTotalTokens = data.reduce((s, d) => s + d.totalTokens, 0)
   const grandTotalCost = data.reduce((s, d) => s + d.cost, 0)
   const grandInput = data.reduce((s, d) => s + d.input, 0)
   const grandOutput = data.reduce((s, d) => s + d.output, 0)
   const grandCacheRead = data.reduce((s, d) => s + d.cacheRead, 0)
-
-  const stackId = mode === 'stacked' ? 'a' : undefined
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function renderTopLabel(props: any) {
@@ -73,6 +71,8 @@ export function TokenBreakdown({ monthly }: Props) {
       </g>
     )
   }
+
+  const horizontalChartHeight = Math.max(360, data.length * 56)
 
   return (
     <div className="glass rounded-xl p-5 animate-fade-in">
@@ -102,9 +102,9 @@ export function TokenBreakdown({ monthly }: Props) {
               ? isDark ? 'bg-sky-500/20 text-sky-400' : 'bg-sky-100 text-sky-600'
               : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'
             }`}
-            title="Grouped"
+            title="Grouped (horizontal bars)"
           >
-            <BarChart3 className="w-3.5 h-3.5" />
+            <BarChart3 className="w-3.5 h-3.5 rotate-90" />
             Grouped
           </button>
         </div>
@@ -125,71 +125,112 @@ export function TokenBreakdown({ monthly }: Props) {
         ))}
       </div>
 
-      <div className="h-[380px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 30, right: 30, bottom: 5, left: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} />
-            <XAxis dataKey="month" tick={{ fill: ct.tick, fontSize: 12 }} axisLine={{ stroke: ct.axis }} />
-            <YAxis
-              yAxisId="tokens"
-              tick={{ fill: ct.tick, fontSize: 12 }}
-              axisLine={{ stroke: ct.axis }}
-              tickFormatter={formatTokens}
-            />
-            <YAxis
-              yAxisId="cost"
-              orientation="right"
-              tick={{ fill: ct.tickAccent, fontSize: 12 }}
-              axisLine={{ stroke: ct.axis }}
-              tickFormatter={formatCost}
-            />
-            <Tooltip
-              contentStyle={ct.tooltip}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={((value: any, name: any) => {
-                const v = Number(value ?? 0)
-                if (name === 'Cost') return [formatCost(v), name]
-                if (name === 'Total Tokens') return [formatTokens(v), name]
-                return [formatTokens(v), name ?? '']
-              }) as any}
-            />
-            <Legend wrapperStyle={{ color: ct.tick, fontSize: 12 }} />
+      {mode === 'stacked' ? (
+        <div className="h-[380px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={data} margin={{ top: 30, right: 30, bottom: 5, left: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} />
+              <XAxis dataKey="month" tick={{ fill: ct.tick, fontSize: 12 }} axisLine={{ stroke: ct.axis }} />
+              <YAxis
+                yAxisId="tokens"
+                tick={{ fill: ct.tick, fontSize: 12 }}
+                axisLine={{ stroke: ct.axis }}
+                tickFormatter={formatTokens}
+              />
+              <YAxis
+                yAxisId="cost"
+                orientation="right"
+                tick={{ fill: ct.tickAccent, fontSize: 12 }}
+                axisLine={{ stroke: ct.axis }}
+                tickFormatter={formatCost}
+              />
+              <Tooltip
+                contentStyle={ct.tooltip}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={((value: any, name: any) => {
+                  const v = Number(value ?? 0)
+                  if (name === 'Cost') return [formatCost(v), name]
+                  if (name === 'Total Tokens') return [formatTokens(v), name]
+                  return [formatTokens(v), name ?? '']
+                }) as any}
+              />
+              <Legend wrapperStyle={{ color: ct.tick, fontSize: 12 }} />
 
-            <Bar yAxisId="tokens" dataKey="input" name="Input" stackId={stackId} fill="#38bdf8" />
-            <Bar yAxisId="tokens" dataKey="output" name="Output" stackId={stackId} fill="#818cf8" />
-            <Bar yAxisId="tokens" dataKey="cacheRead" name="Cache Read" stackId={stackId} fill="#34d399" />
-            <Bar yAxisId="tokens" dataKey="cacheWrite" name="Cache Write" stackId={stackId} fill="#fbbf24" radius={[4, 4, 0, 0]}>
-              {mode === 'stacked' && (
+              <Bar yAxisId="tokens" dataKey="input" name="Input" stackId="a" fill="#38bdf8" />
+              <Bar yAxisId="tokens" dataKey="output" name="Output" stackId="a" fill="#818cf8" />
+              <Bar yAxisId="tokens" dataKey="cacheRead" name="Cache Read" stackId="a" fill="#34d399" />
+              <Bar yAxisId="tokens" dataKey="cacheWrite" name="Cache Write" stackId="a" fill="#fbbf24" radius={[4, 4, 0, 0]}>
                 <LabelList
                   dataKey="cacheWrite"
                   position="top"
                   content={(props) => renderTopLabel({ ...props })}
                 />
-              )}
-            </Bar>
+              </Bar>
 
-            <Line
-              yAxisId="cost"
-              type="monotone"
-              dataKey="cost"
-              name="Cost"
-              stroke="#f87171"
-              strokeWidth={2.5}
-              dot={{ fill: '#f87171', r: 3 }}
-            />
-            <Line
-              yAxisId="tokens"
-              type="monotone"
-              dataKey="totalTokens"
-              name="Total Tokens"
-              stroke={ct.labelFill}
-              strokeWidth={1.5}
-              strokeDasharray="4 4"
-              dot={false}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
+              <Line
+                yAxisId="cost"
+                type="monotone"
+                dataKey="cost"
+                name="Cost"
+                stroke="#f87171"
+                strokeWidth={2.5}
+                dot={{ fill: '#f87171', r: 3 }}
+              />
+              <Line
+                yAxisId="tokens"
+                type="monotone"
+                dataKey="totalTokens"
+                name="Total Tokens"
+                stroke={ct.labelFill}
+                strokeWidth={1.5}
+                strokeDasharray="4 4"
+                dot={false}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <div style={{ height: horizontalChartHeight }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={data}
+              layout="vertical"
+              margin={{ top: 10, right: 30, bottom: 5, left: 30 }}
+              barCategoryGap="25%"
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} horizontal={false} />
+              <XAxis
+                type="number"
+                tick={{ fill: ct.tick, fontSize: 12 }}
+                axisLine={{ stroke: ct.axis }}
+                tickFormatter={formatTokens}
+              />
+              <YAxis
+                type="category"
+                dataKey="month"
+                tick={{ fill: ct.tick, fontSize: 12 }}
+                axisLine={{ stroke: ct.axis }}
+                width={60}
+              />
+              <Tooltip
+                contentStyle={ct.tooltip}
+                cursor={{ fill: isDark ? 'rgba(148,163,184,0.1)' : 'rgba(148,163,184,0.15)' }}
+                formatter={((value: unknown, name: unknown) => {
+                  const v = Number(value ?? 0)
+                  return [formatTokens(v), name ?? ''] as [string, string]
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                }) as any}
+              />
+              <Legend wrapperStyle={{ color: ct.tick, fontSize: 12 }} />
+
+              <Bar dataKey="input" name="Input" fill="#38bdf8" radius={[0, 3, 3, 0]} />
+              <Bar dataKey="output" name="Output" fill="#818cf8" radius={[0, 3, 3, 0]} />
+              <Bar dataKey="cacheRead" name="Cache Read" fill="#34d399" radius={[0, 3, 3, 0]} />
+              <Bar dataKey="cacheWrite" name="Cache Write" fill="#fbbf24" radius={[0, 3, 3, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   )
 }

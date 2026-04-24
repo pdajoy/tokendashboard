@@ -15,7 +15,11 @@ function formatCost(n: number): string {
   return '$' + n.toFixed(4)
 }
 
-type SortKey = 'cost' | 'model' | 'source' | 'provider' | 'input' | 'output' | 'cacheRead' | 'messageCount'
+type SortKey = 'cost' | 'model' | 'source' | 'provider' | 'input' | 'output' | 'cacheRead' | 'messageCount' | 'totalTokens'
+
+function totalTokens(e: ModelEntry): number {
+  return e.input + e.output + e.cacheRead + e.cacheWrite + e.reasoning
+}
 
 interface Props {
   entries: ModelEntry[]
@@ -61,6 +65,7 @@ export function ModelTable({ entries, filters }: Props) {
         case 'model': cmp = a.model.localeCompare(b.model); break
         case 'source': cmp = a.client.localeCompare(b.client); break
         case 'provider': cmp = a.provider.localeCompare(b.provider); break
+        case 'totalTokens': cmp = totalTokens(a) - totalTokens(b); break
         default: cmp = (a[sortKey] as number) - (b[sortKey] as number)
       }
       return sortDir === 'asc' ? cmp : -cmp
@@ -101,6 +106,7 @@ export function ModelTable({ entries, filters }: Props) {
 
   const totalCost = filtered.reduce((s, e) => s + e.cost, 0)
   const totalMsgs = filtered.reduce((s, e) => s + e.messageCount, 0)
+  const totalTokenSum = filtered.reduce((s, e) => s + totalTokens(e), 0)
 
   return (
     <div className="glass rounded-xl animate-fade-in overflow-hidden">
@@ -108,7 +114,7 @@ export function ModelTable({ entries, filters }: Props) {
         <div>
           <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Model Breakdown</h3>
           <p className={`text-sm mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            {sorted.length} models &middot; {formatCost(totalCost)} total &middot; {formatNumber(totalMsgs)} messages
+            {sorted.length} models &middot; {formatNumber(totalTokenSum)} tokens &middot; {formatCost(totalCost)} total &middot; {formatNumber(totalMsgs)} messages
           </p>
         </div>
       </div>
@@ -121,6 +127,7 @@ export function ModelTable({ entries, filters }: Props) {
                 ['model', 'Model'],
                 ['source', 'Source'],
                 ['provider', 'Provider'],
+                ['totalTokens', 'Total Tokens'],
                 ['input', 'Input'],
                 ['output', 'Output'],
                 ['cacheRead', 'Cache Read'],
@@ -151,6 +158,7 @@ export function ModelTable({ entries, filters }: Props) {
                     {e.provider}
                   </span>
                 </td>
+                <td className={`px-4 py-3 tabular-nums font-medium ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatNumber(totalTokens(e))}</td>
                 <td className={`px-4 py-3 tabular-nums ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{formatNumber(e.input)}</td>
                 <td className={`px-4 py-3 tabular-nums ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{formatNumber(e.output)}</td>
                 <td className={`px-4 py-3 tabular-nums ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{formatNumber(e.cacheRead)}</td>

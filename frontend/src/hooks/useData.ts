@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '../api'
-import type { ModelsData, MonthlyData, GraphData, PricingData } from '../types'
+import type { ModelsData, MonthlyData, GraphData, PricingData, RefreshTarget, RefreshResult } from '../types'
+import {
+  deriveMetaFromGraph,
+  deriveModelsDataFromGraph,
+  deriveMonthlyDataFromGraph,
+} from '../graph-derived'
 
 interface DashboardData {
   models: ModelsData | null
@@ -23,18 +28,18 @@ export function useData() {
     error: null,
   })
 
-  const [refreshing, setRefreshing] = useState(false)
+  const [refreshing, setRefreshing] = useState<RefreshTarget | null>(null)
 
   const loadData = useCallback(async () => {
     try {
       setData(prev => ({ ...prev, loading: true, error: null }))
-      const [models, monthly, graph, meta, pricing] = await Promise.all([
-        api.getModels(),
-        api.getMonthly(),
+      const [graph, pricing] = await Promise.all([
         api.getGraph(),
-        api.getMeta(),
         api.getPricing().catch(() => null),
       ])
+      const models = deriveModelsDataFromGraph(graph)
+      const monthly = deriveMonthlyDataFromGraph(graph)
+      const meta = deriveMetaFromGraph(graph)
       setData({ models, monthly, graph, meta, pricing, loading: false, error: null })
     } catch (err) {
       setData(prev => ({
@@ -47,18 +52,16 @@ export function useData() {
 
   useEffect(() => { loadData() }, [loadData])
 
-  const refresh = useCallback(async () => {
-    setRefreshing(true)
+  const refresh = useCallback(async (target: RefreshTarget = 'all'): Promise<RefreshResult> => {
+    setRefreshing(target)
     try {
-      const result = await api.refresh()
-      if (result.success) {
-        await loadData()
-      }
+      const result = await api.refresh(target)
+      if (result.success) await loadData()
       return result
     } finally {
-      setRefreshing(false)
+      setRefreshing(null)
     }
   }, [loadData])
 
-  return { ...data, refresh, refreshing }
+  return { ...data, refresh, refreshing, reload: loadData }
 }

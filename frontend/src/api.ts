@@ -1,4 +1,4 @@
-import type { ModelsData, MonthlyData, GraphData, PricingData } from './types'
+import type { GraphData, PricingData, AppSettings, RefreshTarget, RefreshResult } from './types'
 
 const BASE = '/api'
 
@@ -9,16 +9,33 @@ async function fetchJSON<T>(path: string): Promise<T> {
 }
 
 export const api = {
-  getModels: () => fetchJSON<ModelsData>('/models'),
-  getMonthly: () => fetchJSON<MonthlyData>('/monthly'),
   getGraph: () => fetchJSON<GraphData>('/graph'),
-  getMeta: () => fetchJSON<{ updatedAt: string }>('/meta'),
 
-  async refresh(): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${BASE}/refresh`, { method: 'POST' })
+  getPricing: () => fetchJSON<PricingData>('/pricing'),
+
+  getCSVUrl: () => `${BASE}/export/csv`,
+
+  async refresh(target: RefreshTarget = 'all'): Promise<RefreshResult> {
+    const res = await fetch(`${BASE}/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target }),
+    })
     return res.json()
   },
 
-  getPricing: () => fetchJSON<PricingData>('/pricing'),
-  getCSVUrl: () => `${BASE}/export/csv`,
+  async getSettings(): Promise<{ settings: AppSettings }> {
+    const res = await fetch(`${BASE}/settings`)
+    if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`)
+    return res.json()
+  },
+
+  async saveSettings(settings: AppSettings): Promise<{ success: boolean; settings: AppSettings; message?: string }> {
+    const res = await fetch(`${BASE}/settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ settings }),
+    })
+    return res.json()
+  },
 }

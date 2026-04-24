@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import {
-  RefreshCw, Download, Satellite, ExternalLink, Loader2, CheckCircle2, AlertCircle,
+  Settings as SettingsIcon, Download, Satellite, ExternalLink, Loader2, CheckCircle2, AlertCircle,
   Sun, Moon,
 } from 'lucide-react'
 import { useData } from './hooks/useData'
@@ -19,7 +19,9 @@ import { DailyChart } from './components/DailyChart'
 import { DailyTable } from './components/DailyTable'
 import { ShareCard } from './components/ShareCard'
 import { PricingTable } from './components/PricingTable'
-import type { Filters, ModelEntry, Contribution, MonthlyData, MonthlyEntry } from './types'
+import { SettingsModal } from './components/SettingsModal'
+import type { Filters, ModelEntry, Contribution, MonthlyData } from './types'
+import { deriveMonthlyDataFromContributions } from './graph-derived'
 
 type Tab = 'overview' | 'models' | 'monthly' | 'daily' | 'analytics' | 'pricing' | 'share'
 
@@ -33,52 +35,8 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'share', label: 'Share' },
 ]
 
-function buildMonthlyFromContributions(contributions: Contribution[]): MonthlyData {
-  const byMonth = new Map<string, {
-    input: number; output: number; cacheRead: number; cacheWrite: number
-    messageCount: number; cost: number; models: Set<string>
-  }>()
-
-  for (const c of contributions) {
-    const month = c.date.substring(0, 7)
-    let entry = byMonth.get(month)
-    if (!entry) {
-      entry = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, messageCount: 0, cost: 0, models: new Set() }
-      byMonth.set(month, entry)
-    }
-    for (const cl of c.clients) {
-      entry.input += cl.tokens.input
-      entry.output += cl.tokens.output
-      entry.cacheRead += cl.tokens.cacheRead
-      entry.cacheWrite += cl.tokens.cacheWrite
-      entry.cost += cl.cost
-      entry.messageCount += cl.messages
-      entry.models.add(cl.modelId)
-    }
-  }
-
-  const entries: MonthlyEntry[] = [...byMonth.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([month, data]) => ({
-      month,
-      models: [...data.models],
-      input: data.input,
-      output: data.output,
-      cacheRead: data.cacheRead,
-      cacheWrite: data.cacheWrite,
-      messageCount: data.messageCount,
-      cost: data.cost,
-    }))
-
-  return {
-    entries,
-    totalCost: entries.reduce((s, e) => s + e.cost, 0),
-    processingTimeMs: 0,
-  }
-}
-
 function App() {
-  const { models, graph, pricing, loading, error, refresh, refreshing, meta } = useData()
+  const { models, monthly, graph, pricing, loading, error, meta, reload } = useData()
   const { isDark, toggleTheme } = useTheme()
   const [tab, setTab] = useState<Tab>('overview')
   const [filters, setFilters] = useState<Filters>({
@@ -90,6 +48,7 @@ function App() {
     search: '',
   })
   const [refreshMsg, setRefreshMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const filteredEntries = useMemo((): ModelEntry[] => {
     if (!models?.entries) return []
@@ -173,19 +132,19 @@ function App() {
     return result
   }, [graph, filters])
 
-  const filteredMonthly = useMemo((): MonthlyData | null => {
-    if (!filteredContributions.length) return null
-    return buildMonthlyFromContributions(filteredContributions)
-  }, [filteredContributions])
+  const hasContributionFilters = Boolean(
+    filters.dateRange ||
+    filters.sources.length ||
+    filters.providers.length ||
+    filters.models.length ||
+    filters.search
+  )
 
-  async function handleRefresh() {
-    setRefreshMsg(null)
-    const result = await refresh()
-    if (result) {
-      setRefreshMsg({ ok: result.success, text: result.message })
-      setTimeout(() => setRefreshMsg(null), 5000)
-    }
-  }
+  const filteredMonthly = useMemo((): MonthlyData | null => {
+    if (!hasContributionFilters) return monthly
+    return deriveMonthlyDataFromContributions(filteredContributions)
+  }, [filteredContributions, hasContributionFilters, monthly])
+
 
   if (loading) {
     return (
@@ -273,16 +232,16 @@ function App() {
               </a>
 
               <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition disabled:opacity-50 ${
+                onClick={() => setSettingsOpen(true)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition ${
                   isDark
                     ? 'bg-sky-500/10 text-sky-400 hover:bg-sky-500/20'
                     : 'bg-sky-50 text-sky-600 hover:bg-sky-100'
                 }`}
+                title="Settings & data refresh"
               >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">{refreshing ? 'Updating...' : 'Update Data'}</span>
+                <SettingsIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Settings</span>
               </button>
             </div>
           </div>
@@ -359,7 +318,7 @@ function App() {
         {tab === 'monthly' && (
           <>
             <MonthlyChart monthly={filteredMonthly} />
-            <MonthlyTable monthly={filteredMonthly} />
+            <MonthlyTable monthly={filteredMonthly} contributions={filteredContributions} />
             <TokenBreakdown monthly={filteredMonthly} />
           </>
         )}
@@ -399,6 +358,20 @@ function App() {
           <span>Data from Cursor IDE, Codex CLI, and more</span>
         </div>
       </footer>
+
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onRefreshed={result => {
+          if (result.success) {
+            reload()
+            setRefreshMsg({ ok: true, text: result.message })
+          } else {
+            setRefreshMsg({ ok: false, text: result.message })
+          }
+          setTimeout(() => setRefreshMsg(null), 6000)
+        }}
+      />
     </div>
   )
 }
