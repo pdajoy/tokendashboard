@@ -6,7 +6,8 @@ import {
 import type { MonthlyData } from '../types'
 import { format, parse } from 'date-fns'
 import { BarChart3, Layers } from 'lucide-react'
-import { useTheme, chartTheme } from '../hooks/useTheme'
+import { useTheme } from '../hooks/useTheme'
+import { chartTheme } from '../hooks/chartTheme'
 
 function formatTokens(n: number): string {
   if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B'
@@ -146,13 +147,14 @@ export function TokenBreakdown({ monthly }: Props) {
               />
               <Tooltip
                 contentStyle={ct.tooltip}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                /* eslint-disable @typescript-eslint/no-explicit-any */
                 formatter={((value: any, name: any) => {
                   const v = Number(value ?? 0)
                   if (name === 'Cost') return [formatCost(v), name]
                   if (name === 'Total Tokens') return [formatTokens(v), name]
                   return [formatTokens(v), name ?? '']
                 }) as any}
+                /* eslint-enable @typescript-eslint/no-explicit-any */
               />
               <Legend wrapperStyle={{ color: ct.tick, fontSize: 12 }} />
 

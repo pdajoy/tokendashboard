@@ -2,7 +2,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart, Area,
 } from 'recharts'
 import { format, parse } from 'date-fns'
-import { useTheme, chartTheme } from '../hooks/useTheme'
+import { useTheme } from '../hooks/useTheme'
+import { chartTheme } from '../hooks/chartTheme'
 import type { MonthlyData } from '../types'
 
 interface Props {
@@ -69,13 +70,14 @@ export function MonthlyChart({ monthly }: Props) {
             />
             <Tooltip
               contentStyle={ct.tooltip}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              /* eslint-disable @typescript-eslint/no-explicit-any */
               formatter={((value: any, name: any) => {
                 const v = Number(value ?? 0)
                 if (name === 'cost') return [formatCost(v), 'Cost']
                 if (name === 'messages') return [v, 'Messages']
                 return [formatTokens(v), name]
               }) as any}
+              /* eslint-enable @typescript-eslint/no-explicit-any */
             />
             <Area yAxisId="cost" type="monotone" dataKey="cost" fill="url(#costGrad)" stroke="#38bdf8" strokeWidth={2} />
             <Line yAxisId="msgs" type="monotone" dataKey="messages" stroke="#818cf8" strokeWidth={2} dot={{ fill: '#818cf8', r: 3 }} />

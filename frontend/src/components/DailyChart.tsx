@@ -2,7 +2,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, Line, ComposedChart, Legend,
 } from 'recharts'
 import { format, parseISO, subDays } from 'date-fns'
-import { useTheme, chartTheme } from '../hooks/useTheme'
+import { useTheme } from '../hooks/useTheme'
+import { chartTheme } from '../hooks/chartTheme'
 import type { Contribution } from '../types'
 
 function formatCost(n: number): string {
@@ -83,13 +84,14 @@ export function DailyChart({ contributions, days = 60 }: Props) {
             />
             <Tooltip
               contentStyle={ct.tooltip}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              /* eslint-disable @typescript-eslint/no-explicit-any */
               formatter={((value: any, name: any) => {
                 const v = Number(value ?? 0)
                 if (name === 'Cost') return [formatCost(v), name]
                 if (name === 'Total Tokens') return [formatTokens(v), name]
                 return [v, name ?? '']
               }) as any}
+              /* eslint-enable @typescript-eslint/no-explicit-any */
             />
             <Legend wrapperStyle={{ color: ct.tick, fontSize: 12 }} />
             <Area

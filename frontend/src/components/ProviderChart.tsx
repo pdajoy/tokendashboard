@@ -1,5 +1,6 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
-import { useTheme, chartTheme } from '../hooks/useTheme'
+import { useTheme } from '../hooks/useTheme'
+import { chartTheme } from '../hooks/chartTheme'
 import type { ModelEntry } from '../types'
 
 const COLORS = [
