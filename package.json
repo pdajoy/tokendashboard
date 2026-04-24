@@ -1,6 +1,6 @@
 {
   "name": "tokscale-dashboard",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Beautiful analytics dashboard for tracking AI coding assistant token usage and costs, built on top of the tokscale CLI.",
   "type": "module",
   "license": "MIT",
@@ -18,10 +18,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/pdajoy/tokendashboard.git"
+    "url": "git+https://github.com/pdajoy/tokendashboard.git"
   },
   "bin": {
-    "tokscale-dashboard": "./scripts/server.mjs"
+    "tokscale-dashboard": "scripts/server.mjs"
   },
   "files": [
     "scripts/server.mjs",
