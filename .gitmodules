@@ -1,0 +1,3 @@
+[submodule "tokscale"]
+	path = tokscale
+	url = git@github.com:junhoyeo/tokscale.git

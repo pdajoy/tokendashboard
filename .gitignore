@@ -2,13 +2,17 @@
 bin/
 frontend/dist/
 frontend/node_modules/
+node_modules/
 
-# Data files (user-specific)
+# Data files (user-specific / local runtime)
 data/models.json
 data/monthly.json
 data/graph.json
 data/meta.json
 data/pricing.json
+data/settings.json
+data/.litellm-cache.json
+data/.openrouter-cache.json
 
 # OS files
 .DS_Store

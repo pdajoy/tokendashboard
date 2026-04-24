@@ -1,0 +1,47 @@
+{
+  "name": "tokscale-dashboard",
+  "version": "0.1.0",
+  "description": "Beautiful analytics dashboard for tracking AI coding assistant token usage and costs, built on top of the tokscale CLI.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "tokscale",
+    "dashboard",
+    "ai",
+    "cursor",
+    "claude",
+    "codex",
+    "gemini",
+    "analytics",
+    "token",
+    "llm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pdajoy/tokendashboard.git"
+  },
+  "bin": {
+    "tokscale-dashboard": "./scripts/server.mjs"
+  },
+  "files": [
+    "scripts/server.mjs",
+    "scripts/data-utils.mjs",
+    "scripts/data-refresh.mjs",
+    "scripts/pricing-resolver.mjs",
+    "scripts/settings.mjs",
+    "frontend/dist/**/*",
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "npm --prefix frontend install && npm --prefix frontend run build",
+    "start": "node ./scripts/server.mjs",
+    "dev": "node ./scripts/dev.mjs",
+    "refresh": "node -e \"import('./scripts/data-refresh.mjs').then(m => m.runRefreshTarget(process.argv[1] || 'all', { dataDir: process.cwd() + '/data', settings: { runner: 'bunx', spec: 'tokscale@latest' }, log: console.log }))\"",
+    "prepublishOnly": "npm run build"
+  }
+}
