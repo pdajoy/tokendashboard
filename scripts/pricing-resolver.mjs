@@ -51,6 +51,9 @@ const CURSOR_PRICING_TABLE = {
   'claude-4-6-opus-fast': { input: 3e-5, output: 1.5e-4, cacheRead: 3e-6, cacheWrite: 3.75e-5 },
   'claude-4-6-sonnet': { input: 3e-6, output: 1.5e-5, cacheRead: 3e-7, cacheWrite: 3.75e-6 },
   'claude-4-7-opus': { input: 5e-6, output: 2.5e-5, cacheRead: 5e-7, cacheWrite: 6.25e-6 },
+  'claude-4-7-opus-fast': { input: 3e-5, output: 1.5e-4, cacheRead: 3e-6, cacheWrite: 3.75e-5 },
+  'claude-4-8-opus': { input: 5e-6, output: 2.5e-5, cacheRead: 5e-7, cacheWrite: 6.25e-6 },
+  'claude-4-8-opus-fast': { input: 1e-5, output: 5e-5, cacheRead: 1e-6, cacheWrite: 1.25e-5 },
   // `-1m` denotes Cursor's 1M-context tier; Anthropic charges 2x base rates above 200k.
   'claude-4-sonnet-1m': { input: 6e-6, output: 2.25e-5, cacheRead: 6e-7, cacheWrite: 7.5e-6 },
   'gpt-5-fast': { input: 2.5e-6, output: 2e-5, cacheRead: 2.5e-7 },
@@ -58,8 +61,25 @@ const CURSOR_PRICING_TABLE = {
 
 const LOCAL_OVERRIDE_LABEL = 'Local Override'
 
-// Manual patches for models where we always want local control (claude-opus-4-7 variants).
+// Manual patches for models where we always want local control.
+// Source: Anthropic pricing (platform.claude.com/docs/en/about-claude/pricing)
 export const LOCAL_PRICING_OVERRIDES = {
+  'claude-opus-4-8': {
+    matchedKey: 'claude-opus-4-8',
+    source: LOCAL_OVERRIDE_LABEL,
+    inputPer1M: 5,
+    outputPer1M: 25,
+    cacheReadPer1M: 0.5,
+    cacheWritePer1M: 6.25,
+  },
+  'claude-opus-4-8-fast': {
+    matchedKey: 'claude-opus-4-8',
+    source: LOCAL_OVERRIDE_LABEL,
+    inputPer1M: 10,
+    outputPer1M: 50,
+    cacheReadPer1M: 1,
+    cacheWritePer1M: 12.5,
+  },
   'claude-opus-4-7': {
     matchedKey: 'claude-opus-4-7',
     source: LOCAL_OVERRIDE_LABEL,
@@ -67,6 +87,14 @@ export const LOCAL_PRICING_OVERRIDES = {
     outputPer1M: 25,
     cacheReadPer1M: 0.5,
     cacheWritePer1M: 6.25,
+  },
+  'claude-opus-4-7-fast': {
+    matchedKey: 'claude-opus-4-7',
+    source: LOCAL_OVERRIDE_LABEL,
+    inputPer1M: 30,
+    outputPer1M: 150,
+    cacheReadPer1M: 3,
+    cacheWritePer1M: 37.5,
   },
   'claude-opus-4-7-thinking-high': {
     matchedKey: 'claude-opus-4-7',
@@ -84,14 +112,40 @@ export const LOCAL_PRICING_OVERRIDES = {
     cacheReadPer1M: 0.5,
     cacheWritePer1M: 6.25,
   },
+  'claude-opus-4-6': {
+    matchedKey: 'claude-opus-4-6',
+    source: LOCAL_OVERRIDE_LABEL,
+    inputPer1M: 5,
+    outputPer1M: 25,
+    cacheReadPer1M: 0.5,
+    cacheWritePer1M: 6.25,
+  },
+  'claude-opus-4-6-fast': {
+    matchedKey: 'claude-opus-4-6',
+    source: LOCAL_OVERRIDE_LABEL,
+    inputPer1M: 30,
+    outputPer1M: 150,
+    cacheReadPer1M: 3,
+    cacheWritePer1M: 37.5,
+  },
 }
 
 // Cursor's "fast" priority tier multipliers (https://cursor.com/docs/models-and-pricing).
 // Applied on top of the base-model lookup so reasoning-effort variants like
 // gpt-5.4-xhigh-fast still receive the 2x (or 6x for Claude Opus) adjustment.
+//
+// Opus 4.8 fast = 2x base ($10/$50). Source: Anthropic pricing page.
+// Opus 4.7 fast = 6x base ($30/$150, deprecated July 2026). Source: Anthropic fast mode docs.
+// Opus 4.6 fast = 6x base ($30/$150, removed June 2026). Source: Anthropic fast mode docs.
 const FAST_MULTIPLIER_RULES = [
-  { pattern: /^claude-[0-9]+(?:[-.][0-9]+)?-opus(?:-.*)?-fast$/, multiplier: 6 },
-  { pattern: /^claude-opus-[0-9]+(?:[-.][0-9]+)?(?:-.*)?-fast$/, multiplier: 6 },
+  { pattern: /^claude-(?:opus-)?4[.-]8(?:-.*)?-fast$/, multiplier: 2 },
+  { pattern: /^claude-4[.-]8-opus(?:-.*)?-fast$/, multiplier: 2 },
+  { pattern: /^claude-(?:opus-)?4[.-]7(?:-.*)?-fast$/, multiplier: 6 },
+  { pattern: /^claude-4[.-]7-opus(?:-.*)?-fast$/, multiplier: 6 },
+  { pattern: /^claude-(?:opus-)?4[.-]6(?:-.*)?-fast$/, multiplier: 6 },
+  { pattern: /^claude-4[.-]6-opus(?:-.*)?-fast$/, multiplier: 6 },
+  { pattern: /^claude-[0-9]+(?:[-.][0-9]+)?-opus(?:-.*)?-fast$/, multiplier: 2 },
+  { pattern: /^claude-opus-[0-9]+(?:[-.][0-9]+)?(?:-.*)?-fast$/, multiplier: 2 },
   { pattern: /^gpt-5(?:[-.].*)?-fast$/, multiplier: 2 },
 ]
 

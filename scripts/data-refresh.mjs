@@ -14,7 +14,7 @@ import {
 
 const PRICING_SOURCE_LABEL = 'tokscale graph + LiteLLM + OpenRouter + Cursor official rates'
 const PRICING_NOTE =
-  'Prices in USD per 1M tokens. LiteLLM is the primary upstream source; OpenRouter fills in remaining model ids. Cursor fast-mode multipliers (2x GPT, 6x Claude Opus) are applied locally and the matching graph costs are corrected during refresh.'
+  'Prices in USD per 1M tokens. LiteLLM is the primary upstream source; OpenRouter fills in remaining model ids. Cursor fast-mode multipliers (2x for GPT/Opus 4.8, 6x for Opus 4.6/4.7) are applied locally and the matching graph costs are corrected during refresh.'
 
 const SKIP_MODELS = new Set(['<synthetic>'])
 const SKIP_PROVIDERS = new Set(['cursor'])
